@@ -95,18 +95,25 @@ int main(int argc, char* argv[]) {
   srand(time(NULL));
 
   int size = atoi(argv[1]);
+  
+  // Aqui empieza a tomar del wall-clock
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+
   int** matrix_a = random_matrix(size);
   int** matrix_b = random_matrix(size);
   long int** resulting_matrix = matrix_product(matrix_a, matrix_b, size);
 
-  printf("Matrix A:\n");
-  print_matrix(matrix_a, size);
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  //Finaliza la toma de del wall-clock
 
-  printf("\nMatrix B:\n");
-  print_matrix(matrix_b, size);
+  double time_taken =
+      (end.tv_sec - start.tv_sec) +
+      (end.tv_nsec - start.tv_nsec) / 1e9;
 
-  printf("\nResulting matrix:\n");
-  print_long_matrix(resulting_matrix, size);
+
+  // printf("For size: %i Execution time: %f seconds\n", size, time_taken);
+  printf("%f", time_taken);
 
   free_matrix(matrix_a, size);
   free_matrix(matrix_b, size);
