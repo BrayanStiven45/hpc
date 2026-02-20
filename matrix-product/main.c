@@ -22,26 +22,25 @@ int** random_matrix (int size) {
   return matrix;
 }
 
-void initialize_vector(long int* vector, int size) {
+void initialize_vector(int* vector, int size) {
   for (int i = 0; i < size; i++) {
     vector[i] = 0;
   }
 }
 
-long int** matrix_product (int** matrix_a, int** matrix_b, int size) {
-  long int** resulting_matrix = malloc(size * sizeof(long int*));
-  long int a;
-  long int b;
+int** matrix_product (int** matrix_a, int** matrix_b, int size) {
+  int** resulting_matrix = malloc(size * sizeof(int*));
+  int a;
+  int b;
 
-  long int* temp_vector;
+  int* temp_vector;
 
   for (int a_row = 0; a_row < size; a_row++) {
-    temp_vector = malloc(size * sizeof(long int));
+    temp_vector = malloc(size * sizeof(int));
     initialize_vector(temp_vector, size);
 
     for (int b_col = 0; b_col < size; b_col++) {
       for (int counter = 0; counter < size; counter++) {
-
         a = matrix_a[a_row][counter];
         b = matrix_b[counter][b_col];
         temp_vector[b_col] += a * b;
@@ -54,24 +53,6 @@ long int** matrix_product (int** matrix_a, int** matrix_b, int size) {
   return resulting_matrix;
 }
 
-void print_matrix(int** matrix, int size) {
-  for (int i = 0; i < size; i++) {
-    for (int j = 0; j < size; j++) {
-      printf("%d ", matrix[i][j]);
-    }
-    printf("\n");
-  }
-}
-
-void print_long_matrix(long int** matrix, int size) {
-  for (int i = 0; i < size; i++) {
-    for (int j = 0; j < size; j++) {
-      printf("%ld ", matrix[i][j]);
-    }
-    printf("\n");
-  }
-}
-
 void free_matrix(int** matrix, int size) {
   for (int i = 0; i < size; i++) {
     free(matrix[i]);
@@ -79,11 +60,35 @@ void free_matrix(int** matrix, int size) {
   free(matrix);
 }
 
-void free_long_matrix(long int** matrix, int size) {
+void print_matrix(int** matrix, int size) {
+  printf("[");
   for (int i = 0; i < size; i++) {
-    free(matrix[i]);
+    printf("[");
+    for (int j = 0; j < size; j++) {
+      if (j < size - 1) {
+        printf("%d,", matrix[i][j]);
+      } else {
+        printf("%d", matrix[i][j]);
+      }
+    }
+    if (i < size - 1) {
+      printf("],");
+    } else {
+      printf("]");
+    }
   }
-  free(matrix);
+  printf("]\n");
+}
+
+void print_product(int** matrix_a, int** matrix_b, int** resulting_matrix, int size) {
+  printf("Matrix A:\n");
+  print_matrix(matrix_a, size);
+
+  printf("\nMatrix B:\n");
+  print_matrix(matrix_b, size);
+
+  printf("\nResulting matrix:\n");
+  print_matrix(resulting_matrix, size);
 }
 
 int main(int argc, char* argv[]) {
@@ -102,7 +107,7 @@ int main(int argc, char* argv[]) {
   // Here it starts taking wall-clock time
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  long int** resulting_matrix = matrix_product(matrix_a, matrix_b, size);
+  int** resulting_matrix = matrix_product(matrix_a, matrix_b, size);
 
   clock_gettime(CLOCK_MONOTONIC, &end);
   // It ends taking wall-clock time
@@ -111,11 +116,11 @@ int main(int argc, char* argv[]) {
     (end.tv_sec - start.tv_sec) +
     (end.tv_nsec - start.tv_nsec) / 1e9;
 
-  printf("%f", time_taken);
+  print_product(matrix_a, matrix_b, resulting_matrix, size);
+  // printf("%f", time_taken);
 
   free_matrix(matrix_a, size);
   free_matrix(matrix_b, size);
-  free_long_matrix(resulting_matrix, size);
 
   return 0;
 }
