@@ -60,37 +60,6 @@ void free_matrix(int** matrix, int size) {
   free(matrix);
 }
 
-void print_matrix(int** matrix, int size) {
-  printf("[");
-  for (int i = 0; i < size; i++) {
-    printf("[");
-    for (int j = 0; j < size; j++) {
-      if (j < size - 1) {
-        printf("%d,", matrix[i][j]);
-      } else {
-        printf("%d", matrix[i][j]);
-      }
-    }
-    if (i < size - 1) {
-      printf("],");
-    } else {
-      printf("]");
-    }
-  }
-  printf("]\n");
-}
-
-void print_product(int** matrix_a, int** matrix_b, int** resulting_matrix, int size) {
-  printf("Matrix A:\n");
-  print_matrix(matrix_a, size);
-
-  printf("\nMatrix B:\n");
-  print_matrix(matrix_b, size);
-
-  printf("\nResulting matrix:\n");
-  print_matrix(resulting_matrix, size);
-}
-
 int main(int argc, char* argv[]) {
   if (argc != 2) {
     printf("Usage: %s [matrix_size]\n", argv[0]);
@@ -116,8 +85,7 @@ int main(int argc, char* argv[]) {
     (end.tv_sec - start.tv_sec) +
     (end.tv_nsec - start.tv_nsec) / 1e9;
 
-  print_product(matrix_a, matrix_b, resulting_matrix, size);
-  // printf("%f", time_taken);
+  printf("%f", time_taken);
 
   free_matrix(matrix_a, size);
   free_matrix(matrix_b, size);

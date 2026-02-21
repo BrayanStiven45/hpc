@@ -2,7 +2,7 @@
 
 OUTPUT="times.csv"
 
-sizes=(10 100 200 300)
+sizes=(400 600 800 1200 1600 2400 3200 4800 6400 9600 12800 25600)
 
 # Write header row
 echo -n "Run" > $OUTPUT
@@ -15,11 +15,14 @@ echo "" >> $OUTPUT
 # Runs
 for j in {1..10}; do
   echo -n "$j" >> $OUTPUT
-    
+  
+  echo "Test $j with each size:"
   for s in "${sizes[@]}"; do
     time=$(./exe/main.exe $s)
     echo -n ",$time" >> $OUTPUT
+    echo "$s x $s done!"
   done
     
   echo "" >> $OUTPUT
+  echo ""
 done
