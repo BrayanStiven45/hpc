@@ -1,28 +1,34 @@
 #!/bin/bash
 
-OUTPUT="times.csv"
+sizes=(400 600)
 
-sizes=(400 600 800 1200 1600 2400 3200 4800 6400 9600 12800 25600)
+num_threads=(1 2)
 
-# Write header row
-echo -n "Run" > $OUTPUT
-for s in "${sizes[@]}"; do
-  echo -n ",$s" >> $OUTPUT
-done
 
-echo "" >> $OUTPUT
-
-# Runs
-for j in {1..10}; do
-  echo -n "$j" >> $OUTPUT
-  
-  echo "Test $j with each size:"
+for thread in "${num_threads[@]}"; do
+  OUTPUT="times_$thread.csv"
+  # Write header row
+  echo -n "Run" > $OUTPUT
   for s in "${sizes[@]}"; do
-    time=$(./exe/main.exe $s)
-    echo -n ",$time" >> $OUTPUT
-    echo "$s x $s done!"
+    echo -n ",$s" >> $OUTPUT
   done
-    
+
   echo "" >> $OUTPUT
-  echo ""
-done
+  
+  echo "Tes with $thread thread: "
+  # Runs
+  for j in {1..10}; do
+    echo -n "$j" >> $OUTPUT
+    
+    echo "Test $j with each size:"
+    for s in "${sizes[@]}"; do
+      # time=$(./exe/main.exe $s)
+      time=$(./main $s $thread)
+      echo -n ",$time" >> $OUTPUT
+      echo "$s x $s done!"
+    done
+      
+    echo "" >> $OUTPUT
+    echo ""
+  done
+done 
