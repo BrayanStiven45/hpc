@@ -2,7 +2,7 @@
 
 OUTPUT="times.csv"
 
-sizes=(400 600 800 1200 1600 2400 3200 4800 6400 9600 12800 25600)
+sizes=(400 600 800 1200 1600 2400 3200 4800 6400 9600)
 
 # Write header row
 echo -n "Run" > $OUTPUT
