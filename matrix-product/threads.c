@@ -49,31 +49,31 @@ void* partial_matrix_product(void* arg) {
 }
 
 int** matrix_product_n_threads(int** matrix_a, int** matrix_b, int size, int num_threads) {
-    pthread_t* threads = malloc(num_threads * sizeof(pthread_t));
-    ThreadData* data = malloc(num_threads * sizeof(ThreadData));
+  pthread_t* threads = malloc(num_threads * sizeof(pthread_t));
+  ThreadData* data = malloc(num_threads * sizeof(ThreadData));
 
-    int** resulting_matrix = malloc(size * sizeof(int*));
-    for (int i = 0; i < size; i++)
-      resulting_matrix[i] = malloc(size * sizeof(int));
+  int** resulting_matrix = malloc(size * sizeof(int*));
+  for (int i = 0; i < size; i++)
+    resulting_matrix[i] = malloc(size * sizeof(int));
 
-    int rows_per_thread = size / num_threads;
+  int rows_per_thread = size / num_threads;
 
-    for (int i = 0; i < num_threads; i++) {
-      int start = i * rows_per_thread;
-      int end = (i == num_threads - 1) ? size : start + rows_per_thread;
+  for (int i = 0; i < num_threads; i++) {
+    int start = i * rows_per_thread;
+    int end = (i == num_threads - 1) ? size : start + rows_per_thread;
 
-      data[i] = (ThreadData) { matrix_a, matrix_b, resulting_matrix, size, start, end };
+    data[i] = (ThreadData) { matrix_a, matrix_b, resulting_matrix, size, start, end };
 
-      pthread_create(&threads[i], NULL, partial_matrix_product, &data[i]);
-    }
+    pthread_create(&threads[i], NULL, partial_matrix_product, &data[i]);
+  }
 
-    for (int i = 0; i < num_threads; i++)
-      pthread_join(threads[i], NULL);
+  for (int i = 0; i < num_threads; i++)
+    pthread_join(threads[i], NULL);
 
-    free(threads);
-    free(data);
+  free(threads);
+  free(data);
 
-    return resulting_matrix;
+  return resulting_matrix;
 }
 
 void free_matrix(int** matrix, int size) {
@@ -104,8 +104,8 @@ int main(int argc, char* argv[]) {
   clock_gettime(CLOCK_MONOTONIC, &end);
 
   double time_taken =
-      (end.tv_sec - start.tv_sec) +
-      (end.tv_nsec - start.tv_nsec) / 1e9;
+    (end.tv_sec - start.tv_sec) +
+    (end.tv_nsec - start.tv_nsec) / 1e9;
 
   printf("%f\n", time_taken);
 
