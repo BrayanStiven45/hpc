@@ -12,7 +12,7 @@ typedef struct {
   int end_row;
 } ThreadData;
 
-int* random_vector(int size) {
+int* random_vector (int size) {
   int* vector = malloc(size * sizeof(int));
 
   for (int i = 0; i < size; i++)
@@ -21,7 +21,7 @@ int* random_vector(int size) {
   return vector;
 }
 
-int** random_matrix(int size) {
+int** random_matrix (int size) {
   int** matrix = malloc(size * sizeof(int*));
 
   for (int i = 0; i < size; i++)
@@ -30,25 +30,23 @@ int** random_matrix(int size) {
   return matrix;
 }
 
-void* partial_matrix_product(void* arg) {
+void* partial_matrix_product (void* arg) {
   ThreadData* data = (ThreadData*) arg;
 
-  for (int row = data -> start_row; row < data -> end_row; row++) {
-    for (int col = 0; col < data -> size; col++) {
+  for (int a_row = data -> start_row; a_row < data -> end_row; a_row++) {
+    for (int b_col = 0; b_col < data -> size; b_col++) {
       int sum = 0;
-
-      for (int k = 0; k < data -> size; k++) {
-        sum += data -> matrix_a[row][k] * data -> matrix_b[k][col];
+      for (int counter = 0; counter < data -> size; counter++) {
+        sum += data -> matrix_a[a_row][counter] * data -> matrix_b[counter][b_col];
       }
-
-      data -> resulting_matrix[row][col] = sum;
+      data -> resulting_matrix[a_row][b_col] = sum;
     }
   }
 
   pthread_exit(NULL);
 }
 
-int** matrix_product_n_threads(int** matrix_a, int** matrix_b, int size, int num_threads) {
+int** matrix_product_n_threads (int** matrix_a, int** matrix_b, int size, int num_threads) {
   pthread_t* threads = malloc(num_threads * sizeof(pthread_t));
   ThreadData* data = malloc(num_threads * sizeof(ThreadData));
 
@@ -76,13 +74,13 @@ int** matrix_product_n_threads(int** matrix_a, int** matrix_b, int size, int num
   return resulting_matrix;
 }
 
-void free_matrix(int** matrix, int size) {
+void free_matrix (int** matrix, int size) {
   for (int i = 0; i < size; i++)
     free(matrix[i]);
   free(matrix);
 }
 
-int main(int argc, char* argv[]) {
+int main (int argc, char* argv[]) {
   if (argc != 3) {
     printf("Usage: %s [matrix_size] [num_threads]\n", argv[0]);
     return 1;
