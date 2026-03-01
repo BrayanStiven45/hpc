@@ -22,32 +22,19 @@ int** random_matrix (int size) {
   return matrix;
 }
 
-void initialize_vector(int* vector, int size) {
-  for (int i = 0; i < size; i++) {
-    vector[i] = 0;
-  }
-}
-
 int** matrix_product (int** matrix_a, int** matrix_b, int size) {
   int** resulting_matrix = malloc(size * sizeof(int*));
-  int a;
-  int b;
-
-  int* temp_vector;
+  for (int i = 0; i < size; i++)
+    resulting_matrix[i] = malloc(size * sizeof(int));
 
   for (int a_row = 0; a_row < size; a_row++) {
-    temp_vector = malloc(size * sizeof(int));
-    initialize_vector(temp_vector, size);
-
     for (int b_col = 0; b_col < size; b_col++) {
+      int sum = 0;
       for (int counter = 0; counter < size; counter++) {
-        a = matrix_a[a_row][counter];
-        b = matrix_b[counter][b_col];
-        temp_vector[b_col] += a * b;
+        sum += matrix_a[a_row][counter] * matrix_b[counter][b_col];
       }
+      resulting_matrix[a_row][b_col] = sum;
     }
-
-    resulting_matrix[a_row] = temp_vector;
   }
 
   return resulting_matrix;
@@ -86,9 +73,6 @@ int main(int argc, char* argv[]) {
     (end.tv_nsec - start.tv_nsec) / 1e9;
 
   printf("%f", time_taken);
-
-  free_matrix(matrix_a, size);
-  free_matrix(matrix_b, size);
 
   return 0;
 }
