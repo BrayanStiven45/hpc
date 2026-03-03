@@ -4,7 +4,8 @@ OUTPUT="times.csv"
 
 sizes=(400 600 800 1200 1600 2400 3200 4800 6400 9600)
 
-exe="./exe/sequential.exe"
+# exe="./exe/sequential.exe"
+exe="./sequential"
 
 # Write header row
 echo -n "Run" > $OUTPUT
