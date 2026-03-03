@@ -15,7 +15,7 @@ typedef struct {
 int* random_vector(int size) {
     int* vector = malloc(size * sizeof(int));
     for (int i = 0; i < size; i++)
-        vector[i] = rand() % 10;
+        vector[i] = rand();
     return vector;
 }
 

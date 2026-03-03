@@ -60,6 +60,15 @@ void free_matrix(int** matrix, int size) {
   free(matrix);
 }
 
+void print_long_matrix(int** matrix, int size) {
+  for (int i = 0; i < size; i++) {
+    for (int j = 0; j < size; j++) {
+      printf("%ld ", matrix[i][j]);
+    }
+    printf("\n");
+  }
+}
+
 int main(int argc, char* argv[]) {
   if (argc != 2) {
     printf("Usage: %s [matrix_size]\n", argv[0]);
@@ -86,6 +95,13 @@ int main(int argc, char* argv[]) {
     (end.tv_nsec - start.tv_nsec) / 1e9;
 
   printf("%f", time_taken);
+
+  printf("Matrix a\n" );
+  print_long_matrix(matrix_a, size);
+  printf("Matrix b\n" );
+  print_long_matrix(matrix_b, size);
+  printf("Matrix resulting\n" );
+  print_long_matrix(resulting_matrix, size);
 
   free_matrix(matrix_a, size);
   free_matrix(matrix_b, size);
