@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sizes=(400 600 800 1200 1600 2400 3200 4800 6400 9600)
-num_threads=(1 2 3 4 5 6 7 8)
+num_threads=(1 2 4 6 8)
 
 for thread in "${num_threads[@]}"; do
   OUTPUT="times_$thread.csv"
