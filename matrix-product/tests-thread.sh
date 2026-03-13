@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sizes=(12800 19200 25600)
+sizes=(400 600 800 1200 1600 2400 3200 4800 6400 9600)
 num_threads=(1 2 4 6 8)
 
 for thread in "${num_threads[@]}"; do
