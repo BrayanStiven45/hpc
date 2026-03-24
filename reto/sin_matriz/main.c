@@ -50,7 +50,7 @@ double residual_rms (double* u, int n, double h) {
   return sqrt(sum / n);
 }
 
-double* jacobi (int k) {
+double* jacobi (int k, int* out_iters) {
   int n = round(pow(2, k) + 1.0);
   double h = 1.0 / (double) (n - 1);
   double* points     = initialize_points(n);
@@ -70,11 +70,12 @@ double* jacobi (int k) {
 
     double rms = residual_rms(points, n, h);
     if (rms <= tol) {
-      printf("Converged at iteration %d  (RMS residual = %.6e)\n\n", iter, rms);
+      fprintf(stderr, "Converged at iteration %d  (RMS residual = %.6e)\n\n", iter, rms);
       break;
     }
   }
 
+  *out_iters = iter;
   free(points_new);
   return points;
 }
@@ -90,7 +91,8 @@ int main (int argc, char* argv[]) {
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  double* points = jacobi(k);
+  int iters = 0;
+  double* points = jacobi(k, &iters);
 
   clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -98,15 +100,18 @@ int main (int argc, char* argv[]) {
     (end.tv_sec  - start.tv_sec) +
     (end.tv_nsec - start.tv_nsec) / 1e9;
 
-  printf("Wall-clock time: %f s\n", time_taken);
-
   int n = round(pow(2, k) + 1.0);
+
+  // stdout: tiempo iteraciones nodos  (para que el script los capture)
+  printf("%f %d %d\n", time_taken, iters, n);
+
+  // El resto va a stderr
   double h = 1.0 / (double) (n - 1);
-  printf("\n  I       x         U_Jacobi      U_Exact\n");
+  fprintf(stderr, "\n  I       x         U_Jacobi      U_Exact\n");
   for (int j = 0; j < n; j++) {
     double x_j     = j * h;
     double u_exact = known_u(x_j);
-    printf("%4d  %8.4f  %12.6f  %12.6f\n", j + 1, x_j, points[j], u_exact);
+    fprintf(stderr, "%4d  %8.4f  %12.6f  %12.6f\n", j + 1, x_j, points[j], u_exact);
   }
 
   free(points);
