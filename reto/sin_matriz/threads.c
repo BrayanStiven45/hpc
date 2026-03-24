@@ -68,7 +68,7 @@ void* partial_jacobi (void* arg) {
   pthread_exit(NULL);
 }
 
-double* jacobi_n_threads (int k, int num_threads) {
+double* jacobi_n_threads (int k, int num_threads, int* out_iters) {
   pthread_t* threads = malloc(num_threads * sizeof(pthread_t));
   ThreadData* data = malloc(num_threads * sizeof(ThreadData));
 
@@ -88,6 +88,7 @@ double* jacobi_n_threads (int k, int num_threads) {
   int remainder = internal_nodes % num_threads;
 
   int finish = 0;
+  int iter = 0;
   for (int i = 0; i < num_threads; i++) {
     int start = 1 + i * base;
     int end = start + base - 1;
@@ -106,6 +107,7 @@ double* jacobi_n_threads (int k, int num_threads) {
     u_new = tmp;
 
     double rms = residual_rms(u, n, h);
+    iter++;
 
     if (rms <= tol) finish = 1;
 
@@ -120,6 +122,7 @@ double* jacobi_n_threads (int k, int num_threads) {
   pthread_barrier_destroy(&calc_barrier);
   pthread_barrier_destroy(&swap_barrier);
 
+  *out_iters = iter;
   free(data);
   free(threads);
   free(u_new);
@@ -138,7 +141,8 @@ int main (int argc, char* argv[]) {
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  double* u = jacobi_n_threads(k, num_threads);
+  int iters = 0;
+  double* u = jacobi_n_threads(k, num_threads, &iters);
 
   clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -146,7 +150,8 @@ int main (int argc, char* argv[]) {
     (end.tv_sec  - start.tv_sec) +
     (end.tv_nsec - start.tv_nsec) / 1e9;
 
-  printf("%f", time_taken);
+  int n = (int)round(pow(2, k) + 1.0);
+  printf("%f %d %d\n", time_taken, iters, n);
 
   // int n = round(pow(2, k) + 1.0);
   // double h = 1.0 / (double) (n - 1);
