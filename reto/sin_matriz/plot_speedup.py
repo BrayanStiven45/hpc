@@ -9,201 +9,138 @@ import matplotlib.ticker as ticker
 # -----------------------------------------------------------------------
 
 def read_csv(path):
-    """Lee un CSV generado por el shell script.
-    Devuelve (labels, times_matrix, iters_matrix) donde:
-      labels       = lista de strings 'k/n'
-      times_matrix = ndarray (runs x k)
-    """
     df = pd.read_csv(path, index_col=0)
     labels = list(df.columns)
     return labels, df.values.astype(float)
 
-
-def mean_per_k(matrix):
-    return np.mean(matrix, axis=0)
+def avg_time(path, n_runs):
+    """Promedia los primeros n_runs filas del CSV de tiempos."""
+    labels, matrix = read_csv(path)
+    return labels, np.mean(matrix[:n_runs], axis=0)
 
 
 def speedup(seq_mean, par_mean):
     return seq_mean / par_mean
 
+def k_from_label(l): return int(l.split("/")[0])
+def n_from_label(l): return int(l.split("/")[1])
 
-def k_from_label(label):
-    return int(label.split("/")[0])
-
-
-def n_from_label(label):
-    return int(label.split("/")[1])
-
-
-def annotate_iters(ax, x_vals, y_vals, iters, color, offset=(0, 6)):
-    for x, y, it in zip(x_vals, y_vals, iters):
-        ax.annotate(
-            f"{int(it):,}",
-            xy=(x, y),
-            xytext=(offset[0], offset[1]),
-            textcoords="offset points",
-            fontsize=7,
-            color=color,
-            ha="center",
-        )
-
+def save_fig(fig, name):
+    os.makedirs("plots", exist_ok=True)
+    path = os.path.join("plots", name)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    print(f"Guardado: {path}")
 
 # -----------------------------------------------------------------------
-# Rutas
+# Baseline secuencial — 10 corridas
 # -----------------------------------------------------------------------
 
-SEQ_TIME = "secuencial_time/times.csv"
-SEQ_ITER = "secuencial_time/iterations.csv"
+labels_seq, seq_mean = avg_time("secuencial_time/times.csv", 10)
+_, iters_mat         = read_csv("secuencial_time/iterations.csv")
+iters_per_k          = np.mean(iters_mat[:10], axis=0)
 
-PROC_TIME = "process_time/times_p{p}.csv"
-PROC_ITER = "process_time/iterations_p{p}.csv"
+k_vals   = [k_from_label(l) for l in labels_seq]
+n_vals   = [n_from_label(l) for l in labels_seq]
+x        = np.arange(len(k_vals))
+x_labels = [f"k={k} / n={n:,}\n{int(round(it)):,} iters"
+            for k, n, it in zip(k_vals, n_vals, iters_per_k)]
 
-THR_TIME  = "threads_time/times_t{p}.csv"
-THR_ITER  = "threads_time/iterations_t{p}.csv"
-
-OPT_TIME  = "opt_time/times_{o}.csv"
-OPT_ITER  = "opt_time/iterations_{o}.csv"
-
-PROCS = [2, 4, 6, 8]
-OPTS  = ["O1", "O2", "O3"]
-
-OUTPUT_DIR = "plots"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+COLORS  = ["#378ADD", "#1D9E75", "#D85A30", "#7F77DD"]
+PROCS   = [2, 4, 8]
 
 # -----------------------------------------------------------------------
-# Leer baseline secuencial
-# -----------------------------------------------------------------------
-
-labels_seq, times_seq = read_csv(SEQ_TIME)
-_, iters_seq_mat      = read_csv(SEQ_ITER)
-
-seq_mean  = mean_per_k(times_seq)
-iters_seq = mean_per_k(iters_seq_mat)
-k_vals    = [k_from_label(l) for l in labels_seq]
-n_vals    = [n_from_label(l) for l in labels_seq]
-x         = np.arange(len(k_vals))
-x_labels  = [f"k={k}\nn={n:,}" for k, n in zip(k_vals, n_vals)]
-
-COLORS = ["#378ADD", "#1D9E75", "#D85A30", "#7F77DD"]
-
-# -----------------------------------------------------------------------
-# Figura 1 — Speedup Procesos
+# Figura 1 — Speedup Procesos (5 corridas)
 # -----------------------------------------------------------------------
 
 fig, ax = plt.subplots(figsize=(11, 6))
-ax.axhline(1, color="gray", linewidth=0.8, linestyle="--", label="Baseline (seq)")
+ax.axhline(1, color="gray", linewidth=0.8, linestyle="--", label="Baseline (secuencial)")
 
 for idx, p in enumerate(PROCS):
-    path_t = PROC_TIME.format(p=p)
-    path_i = PROC_ITER.format(p=p)
+    path_t = f"process_time/times_p{p}.csv"
+    path_i = f"process_time/iterations_p{p}.csv"
     if not os.path.exists(path_t):
         print(f"  [skip] {path_t} no encontrado")
         continue
 
-    _, times_p = read_csv(path_t)
-    _, iters_p = read_csv(path_i)
-    sp   = speedup(seq_mean, mean_per_k(times_p))
-    iters_mean = mean_per_k(iters_p)
-    color = COLORS[idx]
+    _, par_mean = avg_time(path_t, 5)
+    sp          = speedup(seq_mean, par_mean)
+    color       = COLORS[idx]
 
-    ax.plot(x, sp, marker="o", color=color, linewidth=1.8,
-            markersize=6, label=f"{p} procesos")
-    annotate_iters(ax, x, sp, iters_mean, color, offset=(0, 7))
+    ax.plot(x, sp, marker="o", color=color, linewidth=1.8, markersize=6, label=f"{p} procesos")
 
 ax.set_xticks(x)
 ax.set_xticklabels(x_labels, fontsize=8)
 ax.set_ylabel("Speedup  (T_seq / T_par)")
 ax.set_xlabel("Tamaño del problema")
-ax.set_title("Speedup — Procesos (memoria compartida + semaforos)")
+ax.set_title("Speedup — Procesos")
 ax.legend(fontsize=9)
 ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 ax.grid(axis="y", linewidth=0.4, alpha=0.6)
 ax.grid(axis="y", which="minor", linewidth=0.2, alpha=0.4)
 plt.tight_layout()
-out = os.path.join(OUTPUT_DIR, "speedup_procesos.png")
-plt.savefig(out, dpi=150)
-plt.close()
-print(f"Guardado: {out}")
+save_fig(fig, "speedup_procesos.png")
 
 # -----------------------------------------------------------------------
-# Figura 2 — Speedup Hilos
+# Figura 2 — Speedup Hilos (5 corridas)
 # -----------------------------------------------------------------------
 
 fig, ax = plt.subplots(figsize=(11, 6))
-ax.axhline(1, color="gray", linewidth=0.8, linestyle="--", label="Baseline (seq)")
+ax.axhline(1, color="gray", linewidth=0.8, linestyle="--", label="Baseline (secuencial)")
 
 for idx, p in enumerate(PROCS):
-    path_t = THR_TIME.format(p=p)
-    path_i = THR_ITER.format(p=p)
+    path_t = f"threads_time/times_t{p}.csv"
+    path_i = f"threads_time/iterations_t{p}.csv"
     if not os.path.exists(path_t):
         print(f"  [skip] {path_t} no encontrado")
         continue
 
-    _, times_t = read_csv(path_t)
-    _, iters_t = read_csv(path_i)
-    sp         = speedup(seq_mean, mean_per_k(times_t))
-    iters_mean = mean_per_k(iters_t)
-    color      = COLORS[idx]
+    _, par_mean = avg_time(path_t, 5)
+    sp          = speedup(seq_mean, par_mean)
+    color       = COLORS[idx]
 
-    ax.plot(x, sp, marker="s", color=color, linewidth=1.8,
-            markersize=6, label=f"{p} hilos")
-    annotate_iters(ax, x, sp, iters_mean, color, offset=(0, 7))
+    ax.plot(x, sp, marker="s", color=color, linewidth=1.8, markersize=6, label=f"{p} hilos")
 
 ax.set_xticks(x)
 ax.set_xticklabels(x_labels, fontsize=8)
 ax.set_ylabel("Speedup  (T_seq / T_par)")
 ax.set_xlabel("Tamaño del problema")
-ax.set_title("Speedup — Hilos (pthreads + barriers)")
+ax.set_title("Speedup — Hilos")
 ax.legend(fontsize=9)
 ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 ax.grid(axis="y", linewidth=0.4, alpha=0.6)
 ax.grid(axis="y", which="minor", linewidth=0.2, alpha=0.4)
 plt.tight_layout()
-out = os.path.join(OUTPUT_DIR, "speedup_hilos.png")
-plt.savefig(out, dpi=150)
-plt.close()
-print(f"Guardado: {out}")
+save_fig(fig, "speedup_hilos.png")
 
 # -----------------------------------------------------------------------
-# Figura 3 — Speedup Optimizacion de compilador
+# Figura 3 — Speedup Optimizacion de compilador (10 corridas)
 # -----------------------------------------------------------------------
-
-OPT_COLORS  = ["#1D9E75", "#D85A30", "#7F77DD"]
-OPT_MARKERS = ["^", "D", "P"]
 
 fig, ax = plt.subplots(figsize=(11, 6))
-ax.axhline(1, color="gray", linewidth=0.8, linestyle="--", label="Sin optimizacion (-O0)")
+ax.axhline(1, color="gray", linewidth=0.8, linestyle="--", label="Baseline (sin optimizacion)")
 
-for idx, opt in enumerate(OPTS):
-    path_t = OPT_TIME.format(o=opt)
-    path_i = OPT_ITER.format(o=opt)
-    if not os.path.exists(path_t):
-        print(f"  [skip] {path_t} no encontrado")
-        continue
+path_t = "secuencial_ofast_time/times.csv"
+path_i = "secuencial_ofast_time/iterations.csv"
 
-    _, times_o = read_csv(path_t)
-    _, iters_o = read_csv(path_i)
-    sp         = speedup(seq_mean, mean_per_k(times_o))
-    iters_mean = mean_per_k(iters_o)
-    color      = OPT_COLORS[idx]
+if os.path.exists(path_t):
+    _, ofast_mean  = avg_time(path_t, 10)
+    sp             = speedup(seq_mean, ofast_mean)
 
-    ax.plot(x, sp, marker=OPT_MARKERS[idx], color=color, linewidth=1.8,
-            markersize=7, label=f"-{opt}")
-    annotate_iters(ax, x, sp, iters_mean, color, offset=(0, 7))
+    ax.plot(x, sp, marker="^", color="#D85A30", linewidth=1.8, markersize=7, label="-Ofast")
+else:
+    print("  [skip] secuencial_ofast_time/times.csv no encontrado")
 
 ax.set_xticks(x)
 ax.set_xticklabels(x_labels, fontsize=8)
-ax.set_ylabel("Speedup  (T_O0 / T_Ox)")
+ax.set_ylabel("Speedup  (T_sin_opt / T_Ofast)")
 ax.set_xlabel("Tamaño del problema")
-ax.set_title("Speedup — Optimizacion de compilador (gcc -O1 / -O2 / -O3)")
+ax.set_title("Speedup — Optimizacion de compilador (-Ofast)")
 ax.legend(fontsize=9)
 ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 ax.grid(axis="y", linewidth=0.4, alpha=0.6)
 ax.grid(axis="y", which="minor", linewidth=0.2, alpha=0.4)
 plt.tight_layout()
-out = os.path.join(OUTPUT_DIR, "speedup_compilador.png")
-plt.savefig(out, dpi=150)
-plt.close()
-print(f"Guardado: {out}")
+save_fig(fig, "speedup_compilador.png")
 
-print("\nListo. Graficas en la carpeta 'plots/'")
+print("\nListo. Graficas en plots/")
