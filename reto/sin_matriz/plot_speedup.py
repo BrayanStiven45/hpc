@@ -143,4 +143,54 @@ ax.grid(axis="y", which="minor", linewidth=0.2, alpha=0.4)
 plt.tight_layout()
 save_fig(fig, "speedup_compilador.png")
 
+# -----------------------------------------------------------------------
+# Figura 4 — Comparacion: Ofast + 2/4 hilos + 2/4 procesos
+# -----------------------------------------------------------------------
+
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.axhline(1, color="gray", linewidth=0.8, linestyle="--", label="Baseline (secuencial)")
+
+# Ofast
+path_t = "secuencial_ofast_time/times.csv"
+if os.path.exists(path_t):
+    _, ofast_mean = avg_time(path_t, 10)
+    sp = speedup(seq_mean, ofast_mean)
+    ax.plot(x, sp, marker="^", color="#D85A30", linewidth=1.8, markersize=7, label="-Ofast")
+
+# Procesos 2 y 4
+proc_colors   = {"2": "#378ADD", "4": "#1D9E75"}
+proc_markers  = {"2": "o",       "4": "o"}
+for p in [2, 4]:
+    path_t = f"process_time/times_p{p}.csv"
+    if not os.path.exists(path_t):
+        continue
+    _, par_mean = avg_time(path_t, 5)
+    sp = speedup(seq_mean, par_mean)
+    ax.plot(x, sp, marker=proc_markers[str(p)], color=proc_colors[str(p)],
+            linewidth=1.8, markersize=6, linestyle="-", label=f"{p} procesos")
+
+# Hilos 2 y 4
+thr_colors  = {"2": "#7F77DD", "4": "#D85A30"}
+thr_markers = {"2": "s",       "4": "s"}
+for p in [2, 4]:
+    path_t = f"threads_time/times_t{p}.csv"
+    if not os.path.exists(path_t):
+        continue
+    _, par_mean = avg_time(path_t, 5)
+    sp = speedup(seq_mean, par_mean)
+    ax.plot(x, sp, marker=thr_markers[str(p)], color=thr_colors[str(p)],
+            linewidth=1.8, markersize=6, linestyle="--", label=f"{p} hilos")
+
+ax.set_xticks(x)
+ax.set_xticklabels(x_labels, fontsize=8)
+ax.set_ylabel("Speedup  (T_seq / T_par)")
+ax.set_xlabel("Tamaño del problema")
+ax.set_title("Speedup — Comparacion general")
+ax.legend(fontsize=9)
+ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
+ax.grid(axis="y", linewidth=0.4, alpha=0.6)
+ax.grid(axis="y", which="minor", linewidth=0.2, alpha=0.4)
+plt.tight_layout()
+save_fig(fig, "speedup_comparacion.png")
+
 print("\nListo. Graficas en plots/")
