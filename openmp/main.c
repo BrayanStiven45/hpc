@@ -23,12 +23,12 @@ int** random_matrix (int size) {
   return matrix;
 }
 
-int** matrix_product (int** matrix_a, int** matrix_b, int size, int num_threads) {
+int** matrix_product (int** matrix_a, int** matrix_b, int size) {
   int** resulting_matrix = malloc(size * sizeof(int*));
   for (int i = 0; i < size; i++)
     resulting_matrix[i] = malloc(size * sizeof(int));
 
-  #pragma omp parallel for num_threads(num_threads)
+  #pragma omp parallel for collapse(2)
   for (int a_row = 0; a_row < size; a_row++) {
     for (int b_col = 0; b_col < size; b_col++) {
       int sum = 0;
@@ -50,15 +50,14 @@ void free_matrix(int** matrix, int size) {
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 3) {
-    printf("Usage: %s [matrix_size] [num_threads]\n", argv[0]);
+  if (argc != 2) {
+    printf("Usage: %s [matrix_size]\n", argv[0]);
     return 1;
   }
 
   srand(time(NULL)); // Initialize seed using current time in seconds
 
   int size = atoi(argv[1]);
-  int num_threads = atoi(argv[2]);
 
   int** matrix_a = random_matrix(size);
   int** matrix_b = random_matrix(size);
@@ -67,7 +66,7 @@ int main(int argc, char* argv[]) {
   // Here it starts taking wall-clock time
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  int** resulting_matrix = matrix_product(matrix_a, matrix_b, size, num_threads);
+  int** resulting_matrix = matrix_product(matrix_a, matrix_b, size);
 
   clock_gettime(CLOCK_MONOTONIC, &end);
   // It ends taking wall-clock time
