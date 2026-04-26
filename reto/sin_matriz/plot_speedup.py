@@ -194,3 +194,72 @@ plt.tight_layout()
 save_fig(fig, "speedup_comparacion.png")
 
 print("\nListo. Graficas en plots/")
+
+# -----------------------------------------------------------------------
+# Tablas de promedio de tiempo — formato texto para copiar en Word
+# -----------------------------------------------------------------------
+
+def print_table(title, headers, rows):
+    col_widths = [max(len(str(h)), max(len(str(r[i])) for r in rows))
+                  for i, h in enumerate(headers)]
+    sep = "+" + "+".join("-" * (w + 2) for w in col_widths) + "+"
+    def fmt_row(cells):
+        return "|" + "|".join(f" {str(c):<{w}} " for c, w in zip(cells, col_widths)) + "|"
+    print(f"\n{title}")
+    print(sep)
+    print(fmt_row(headers))
+    print(sep)
+    for row in rows:
+        print(fmt_row(row))
+    print(sep)
+
+col_headers = ["Configuracion"] + [f"k={k}/n={n}" for k, n in zip(k_vals, n_vals)]
+
+# --- Secuencial ---
+print_table(
+    "Promedio de tiempo (s) — Secuencial [10 corridas]",
+    col_headers,
+    [["Secuencial"] + [f"{t:.6f}" for t in seq_mean]]
+)
+
+# --- Procesos ---
+proc_rows = []
+for p in PROCS:
+    path_t = f"process_time/times_p{p}.csv"
+    if not os.path.exists(path_t):
+        continue
+    _, par_mean = avg_time(path_t, 5)
+    proc_rows.append([f"{p} procesos"] + [f"{t:.6f}" for t in par_mean])
+
+if proc_rows:
+    print_table(
+        "Promedio de tiempo (s) — Procesos [5 corridas]",
+        col_headers,
+        proc_rows
+    )
+
+# --- Hilos ---
+thr_rows = []
+for p in PROCS:
+    path_t = f"threads_time/times_t{p}.csv"
+    if not os.path.exists(path_t):
+        continue
+    _, par_mean = avg_time(path_t, 5)
+    thr_rows.append([f"{p} hilos"] + [f"{t:.6f}" for t in par_mean])
+
+if thr_rows:
+    print_table(
+        "Promedio de tiempo (s) — Hilos [5 corridas]",
+        col_headers,
+        thr_rows
+    )
+
+# --- Ofast ---
+path_t = "secuencial_ofast_time/times.csv"
+if os.path.exists(path_t):
+    _, ofast_mean = avg_time(path_t, 10)
+    print_table(
+        "Promedio de tiempo (s) — Ofast [10 corridas]",
+        col_headers,
+        [["Ofast"] + [f"{t:.6f}" for t in ofast_mean]]
+    )
