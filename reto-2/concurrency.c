@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <omp.h>
 
 #define THRESHOLD 1e-4
 #define STABLE_STEPS 50
@@ -24,6 +25,7 @@ void initialize_road (int* road, int n, double density) {
 }
 
 void update_road (int* old, int* new, int n) {
+  #pragma omp parallel for
   for (int i = 0; i < n; i++) {
     int left  = (i - 1 + n) % n;
     int right = (i + 1) % n;
@@ -37,6 +39,7 @@ void update_road (int* old, int* new, int n) {
 
 int count_cars (int* road, int n) {
   int total = 0;
+  #pragma omp parallel for reduction(+:total)
   for (int i = 0; i < n; i++)
     if (road[i] == 1) total++;
   return total;
@@ -44,6 +47,7 @@ int count_cars (int* road, int n) {
 
 int count_moved_cars(int* road, int n) {
   int moved = 0;
+  #pragma omp parallel for reduction(+:moved)
   for (int i = 0; i < n; i++) {
     int right = (i + 1) % n;
     if (road[i] == 1 && road[right] == 0)
@@ -53,6 +57,7 @@ int count_moved_cars(int* road, int n) {
 }
 
 void copy_road (int* dest, int* src, int n) {
+  #pragma omp parallel for
   for (int i = 0; i < n; i++)
     dest[i] = src[i];
 }
