@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 #include <mpi.h>
 
 int* random_vector(int size) {
@@ -49,6 +50,17 @@ int main(int argc, char* argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);   // ID de este proceso
   MPI_Comm_size(MPI_COMM_WORLD, &world_size); // Total de procesos
 
+  /* ---------------------------------------------------------------
+   * Obtener hostname para verificar distribución del cluster
+   * --------------------------------------------------------------- */
+  char hostname[256];
+  gethostname(hostname, sizeof(hostname));
+
+  printf("Rank %d of %d running on %s\n",
+         rank,
+         world_size,
+         hostname);
+
   /* --- Validar argumentos --- */
   if (argc != 2) {
     if (rank == 0)
@@ -85,23 +97,30 @@ int main(int argc, char* argv[]) {
   int* result_block = malloc(rows_per_proc * size * sizeof(int)); // Bloque local del resultado
 
   /* ---------------------------------------------------------------
-   * PROCESO RAÍZ: genera las matrices y mide el tiempo total
+   * Variables para medición de tiempo con MPI_Wtime
    * --------------------------------------------------------------- */
-  struct timespec start, end;
+  double start, end;
 
+  /* ---------------------------------------------------------------
+   * PROCESO RAÍZ: genera las matrices
+   * --------------------------------------------------------------- */
   if (rank == 0) {
     srand(time(NULL));
 
     a_flat = random_matrix_flat(size);
     b_flat = random_matrix_flat(size);
     result = malloc(size * size * sizeof(int));
-
-    // Empieza a tomar el tiempo de pared ANTES del Scatter
-    clock_gettime(CLOCK_MONOTONIC, &start);
   } else {
     // Los demás procesos también necesitan buffer para B
     b_flat = malloc(size * size * sizeof(int));
   }
+
+  /* ---------------------------------------------------------------
+   * Sincronizar todos los procesos antes de iniciar el timer
+   * --------------------------------------------------------------- */
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  start = MPI_Wtime();
 
   /* ---------------------------------------------------------------
    * PASO 1 — MPI_Bcast: el raíz envía B completa a todos los procesos.
@@ -145,16 +164,17 @@ int main(int argc, char* argv[]) {
   );
 
   /* ---------------------------------------------------------------
-   * PROCESO RAÍZ: detiene el reloj e imprime el tiempo
+   * Sincronizar todos los procesos antes de detener el timer
+   * --------------------------------------------------------------- */
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  end = MPI_Wtime();
+
+  /* ---------------------------------------------------------------
+   * PROCESO RAÍZ: imprime el tiempo total de ejecución
    * --------------------------------------------------------------- */
   if (rank == 0) {
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    double time_taken =
-      (end.tv_sec  - start.tv_sec) +
-      (end.tv_nsec - start.tv_nsec) / 1e9;
-
-    printf("%f\n", time_taken);
+    printf("Execution time: %f seconds\n", end - start);
 
     free(a_flat);
     free(result);
